@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 
 
 @csrf_exempt
@@ -82,13 +82,33 @@ def logout_view(request):
         return JsonResponse({"message": "User is not authenticated"}, status=401)
 
     logout(request)
-    return JsonResponse({"message": "Logout successfully"}, status=200)
+    return JsonResponse({"message": "Logout Successfully"}, status=200)
 
 
 #Delete View
 @csrf_exempt
+@require_http_methods(["DELETE"])
 def delete_view(request):
-    if request.method == "DELETE":
-        return JsonResponse({"messgae": "Deleted the user"}, status=200)
-    else:
-        return JsonResponse({"messgae": "User not Found"}, status=404)
+    try:
+        data = json.loads(request.body)
+
+        username = data.get("username")
+        password = data.get("password")
+        
+        if not username or not password:
+            return JsonResponse({"message": "Username or password required"}, status=400)
+
+        user = authenticate(request, username=username, password=password)
+        
+        if user is None:
+            return JsonResponse({"message": "Invalid username or password"}, status=401)
+        
+        user.delete()
+        return JsonResponse({"message": "User successfully deleted"}, status=200)
+    
+    except json.JSONDecodeError:
+        return JsonResponse({"message": "Invalid JSON"}, status=400)
+    except User.DoesNotExist:
+        return JsonResponse({"message": "User not found"}, status=404)
+    
+    
