@@ -3,7 +3,8 @@ version: '3.8'
 services:
   web:
     build: .
-    container_name: django_app
+    image: devendra64/django-api-cicd:latest
+    container_name: django-api-cicd
     command: python manage.py runserver 0.0.0.0:1404
     volumes:
       - .:/app
